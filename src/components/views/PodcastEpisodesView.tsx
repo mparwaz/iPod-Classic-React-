@@ -28,9 +28,7 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
         
         if (podcastId) {
           try {
-            const itunesUrl = `https://itunes.apple.com/lookup?id=${podcastId}&entity=podcastEpisode&limit=50`;
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(itunesUrl)}`;
-            const res = await fetch(proxyUrl);
+            const res = await fetch(`https://itunes.apple.com/lookup?id=${podcastId}&entity=podcastEpisode&limit=50&_c=${Date.now()}`);
             if (res.ok) {
               const data = await res.json();
               if (data.results && data.results.length > 1) {
@@ -57,21 +55,18 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
         }
         
         if (foundEpisodes.length === 0 && podcastUrl) {
-          const proxies = [
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(podcastUrl)}`,
-            `https://corsproxy.io/?${encodeURIComponent(podcastUrl)}`
-          ];
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(podcastUrl)}`;
           
-          for (const proxy of proxies) {
-            try {
-              const res = await fetch(proxy);
-              if (res.ok) {
-                const xmlText = await res.text();
-                
-                if (xmlText && xmlText.includes("<rss")) {
-                  const parser = new DOMParser();
-                  const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                  const items = xmlDoc.getElementsByTagName("item");
+          try {
+            const res = await fetch(proxyUrl);
+            if (res.ok) {
+              const data = await res.json();
+              const xmlText = data.contents;
+              
+              if (xmlText && xmlText.includes("<rss")) {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const items = xmlDoc.getElementsByTagName("item");
                   
                   if (items && items.length > 0) {
                     for (let i = 0; i < items.length; i++) {
@@ -102,14 +97,10 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
                         });
                       }
                     }
-                    if (foundEpisodes.length > 0) {
-                      break;
-                    }
                   }
                 }
               }
             } catch(e) {}
-          }
         }
         setEpisodes(foundEpisodes);
       } catch (e) {

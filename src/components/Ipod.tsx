@@ -418,12 +418,17 @@ export const Ipod: React.FC = () => {
            let resolvedId = null;
            for (const proxy of proxies) {
              try {
-                const res = await fetch(`${proxy}/api/v1/search?q=${encodeURIComponent(queryStr)}&type=video`);
+                const searchUrl = `${proxy}/api/v1/search?q=${encodeURIComponent(queryStr)}&type=video`;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`;
+                const res = await fetch(proxyUrl);
                 if (res.ok) {
                    const data = await res.json();
-                   if (data && data.length > 0) {
-                      resolvedId = data[0].videoId;
-                      break;
+                   if (data.contents) {
+                      const parsed = JSON.parse(data.contents);
+                      if (parsed && parsed.length > 0) {
+                         resolvedId = parsed[0].videoId;
+                         break;
+                      }
                    }
                 }
              } catch (e) {
