@@ -28,7 +28,9 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
         
         if (podcastId) {
           try {
-            const res = await fetch(`https://itunes.apple.com/lookup?id=${podcastId}&entity=podcastEpisode&limit=50`);
+            const itunesUrl = `https://itunes.apple.com/lookup?id=${podcastId}&entity=podcastEpisode&limit=50`;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(itunesUrl)}`;
+            const res = await fetch(proxyUrl);
             if (res.ok) {
               const data = await res.json();
               if (data.results && data.results.length > 1) {
