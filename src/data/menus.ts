@@ -94,6 +94,13 @@ export const menus: Record<string, Menu> = {
     id: 'podcasts',
     title: 'Podcasts',
     items: [
+      { id: 'search_podcasts_link', label: 'Search Podcasts', type: 'menu', target: 'search_podcasts', hasChevron: true }
+    ]
+  },
+  search_podcasts: {
+    id: 'search_podcasts',
+    title: 'Search Podcasts',
+    items: [
       { id: 'search_podcasts_view', label: 'Search Podcasts', type: 'search' }
     ]
   },

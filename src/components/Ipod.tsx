@@ -183,7 +183,7 @@ export const Ipod: React.FC = () => {
       const podcastShows = state.library.filter(s => s.mediaType === 'podcast_show');
       const podcastsMenu = newMenus['podcasts'];
       if (podcastsMenu) {
-        const searchItem = podcastsMenu.items.find(i => i.id === 'search_podcasts_view');
+        const searchItem = podcastsMenu.items.find(i => i.id === 'search_podcasts_link') || { id: 'search_podcasts_link', label: 'Search Podcasts', type: 'menu' as const, target: 'search_podcasts', hasChevron: true };
         const showItems = podcastShows.map(show => ({
           id: `menu_podcast_${show.id}`,
           label: show.title,
@@ -192,7 +192,7 @@ export const Ipod: React.FC = () => {
           hasChevron: true,
           image: show.coverArt || 'https://images.unsplash.com/photo-1593697972679-c4041d132a46?auto=format&fit=crop&q=80&w=400&h=400'
         }));
-        podcastsMenu.items = searchItem ? [searchItem, ...showItems] : showItems;
+        podcastsMenu.items = [searchItem, ...showItems];
 
         podcastShows.forEach(show => {
            newMenus[`podcast_${show.id}`] = {
