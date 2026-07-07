@@ -24,6 +24,7 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
     const fetchEpisodes = async () => {
       try {
         const proxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(podcastUrl)}`,
           `https://api.allorigins.win/get?url=${encodeURIComponent(podcastUrl)}`,
           `https://corsproxy.io/?${encodeURIComponent(podcastUrl)}`
         ];
@@ -34,8 +35,14 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
           try {
             const res = await fetch(proxy);
             if (res.ok) {
-              const wrapper = await res.json();
-              const xmlText = wrapper.contents || wrapper;
+              let xmlText = "";
+              if (proxy.includes("/get?url=")) {
+                const wrapper = await res.json();
+                xmlText = wrapper.contents || "";
+              } else {
+                xmlText = await res.text();
+              }
+
               if (xmlText) {
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
@@ -49,12 +56,36 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
                     const titleEls = item.getElementsByTagName("title");
                     if (titleEls.length > 0) title = titleEls[0].textContent || title;
                     
+                    // Extract season and episode information
+                    let seasonStr = "";
+                    const seasonEls = item.getElementsByTagName("itunes:season");
+                    if (seasonEls.length > 0 && seasonEls[0].textContent) {
+                      seasonStr += `S${seasonEls[0].textContent}`;
+                    }
+                    const epEls = item.getElementsByTagName("itunes:episode");
+                    if (epEls.length > 0 && epEls[0].textContent) {
+                      seasonStr += `E${epEls[0].textContent}`;
+                    }
+                    if (seasonStr) {
+                      title = `[${seasonStr}] ${title}`;
+                    }
+
                     let audioUrl = "";
                     const enclosureEls = item.getElementsByTagName("enclosure");
                     if (enclosureEls.length > 0) {
                       audioUrl = enclosureEls[0].getAttribute("url") || enclosureEls[0].getAttribute("link") || "";
                     }
                     
+                    if (!audioUrl) {
+                      const guidEls = item.getElementsByTagName("guid");
+                      if (guidEls.length > 0) {
+                        const guidText = guidEls[0].textContent || "";
+                        if (guidText.match(/\.(mp3|m4a|wav|ogg)$/i)) {
+                          audioUrl = guidText;
+                        }
+                      }
+                    }
+
                     if (audioUrl) {
                       foundEpisodes.push({
                         id: `ep_${Math.random().toString(36).substr(2, 9)}`,
@@ -76,7 +107,9 @@ export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDark
                 }
               }
             }
-          } catch(e) {}
+          } catch(e) {
+            console.warn("Proxy failed", proxy);
+          }
         }
         setEpisodes(foundEpisodes);
       } catch (e) {
