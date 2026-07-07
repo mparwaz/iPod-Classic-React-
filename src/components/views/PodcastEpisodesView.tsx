@@ -7,100 +7,76 @@ interface PodcastEpisodesViewProps {
   podcastUrl?: string;
   podcastTitle: string;
   podcastArt?: string;
-  podcastId?: string;
   onSelectEpisode: (song: Song) => void;
 }
 
-export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDarkMode, podcastUrl, podcastTitle, podcastArt, podcastId, onSelectEpisode }) => {
+export const PodcastEpisodesView: React.FC<PodcastEpisodesViewProps> = ({ isDarkMode, podcastUrl, podcastTitle, podcastArt, onSelectEpisode }) => {
   const [episodes, setEpisodes] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
-    if (!podcastUrl && !podcastId) {
+    if (!podcastUrl) {
       setLoading(false);
       return;
     }
 
     const fetchEpisodes = async () => {
       try {
+        const proxies = [
+          `https://api.allorigins.win/get?url=${encodeURIComponent(podcastUrl)}`,
+          `https://corsproxy.io/?${encodeURIComponent(podcastUrl)}`
+        ];
+        
         let foundEpisodes: Song[] = [];
         
-        if (podcastId) {
+        for (const proxy of proxies) {
           try {
-            const res = await fetch(`https://itunes.apple.com/lookup?id=${podcastId}&entity=podcastEpisode&limit=50&_c=${Date.now()}`);
+            const res = await fetch(proxy);
             if (res.ok) {
-              const data = await res.json();
-              if (data.results && data.results.length > 1) {
-                for (let i = 1; i < data.results.length; i++) {
-                  const ep = data.results[i];
-                  if (ep.episodeUrl) {
-                    foundEpisodes.push({
-                      id: `ep_${ep.trackId}`,
-                      title: ep.trackName,
-                      artist: podcastTitle,
-                      album: podcastTitle,
-                      url: ep.episodeUrl,
-                      coverArt: podcastArt,
-                      duration: ep.trackTimeMillis ? Math.floor(ep.trackTimeMillis / 1000) : 0,
-                      source: 'stream',
-                      streamId: ep.episodeUrl,
-                      mediaType: 'podcast'
-                    });
+              const wrapper = await res.json();
+              const xmlText = wrapper.contents || wrapper;
+              if (xmlText) {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const items = xmlDoc.getElementsByTagName("item");
+                
+                if (items && items.length > 0) {
+                  for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    
+                    let title = "Untitled Episode";
+                    const titleEls = item.getElementsByTagName("title");
+                    if (titleEls.length > 0) title = titleEls[0].textContent || title;
+                    
+                    let audioUrl = "";
+                    const enclosureEls = item.getElementsByTagName("enclosure");
+                    if (enclosureEls.length > 0) {
+                      audioUrl = enclosureEls[0].getAttribute("url") || enclosureEls[0].getAttribute("link") || "";
+                    }
+                    
+                    if (audioUrl) {
+                      foundEpisodes.push({
+                        id: `ep_${Math.random().toString(36).substr(2, 9)}`,
+                        title,
+                        artist: podcastTitle,
+                        album: podcastTitle,
+                        url: audioUrl,
+                        coverArt: podcastArt,
+                        duration: 0,
+                        source: 'stream',
+                        streamId: audioUrl,
+                        mediaType: 'podcast'
+                      });
+                    }
+                  }
+                  if (foundEpisodes.length > 0) {
+                    break;
                   }
                 }
               }
             }
           } catch(e) {}
-        }
-        
-        if (foundEpisodes.length === 0 && podcastUrl) {
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(podcastUrl)}`;
-          
-          try {
-            const res = await fetch(proxyUrl);
-            if (res.ok) {
-              const data = await res.json();
-              const xmlText = data.contents;
-              
-              if (xmlText && xmlText.includes("<rss")) {
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                const items = xmlDoc.getElementsByTagName("item");
-                  
-                  if (items && items.length > 0) {
-                    for (let i = 0; i < items.length; i++) {
-                      const item = items[i];
-                      
-                      let title = "Untitled Episode";
-                      const titleEls = item.getElementsByTagName("title");
-                      if (titleEls.length > 0) title = titleEls[0].textContent || title;
-                      
-                      let audioUrl = "";
-                      const enclosureEls = item.getElementsByTagName("enclosure");
-                      if (enclosureEls.length > 0) {
-                        audioUrl = enclosureEls[0].getAttribute("url") || enclosureEls[0].getAttribute("link") || "";
-                      }
-                      
-                      if (audioUrl) {
-                        foundEpisodes.push({
-                          id: `ep_${Math.random().toString(36).substr(2, 9)}`,
-                          title,
-                          artist: podcastTitle,
-                          album: podcastTitle,
-                          url: audioUrl,
-                          coverArt: podcastArt,
-                          duration: 0,
-                          source: 'stream',
-                          streamId: audioUrl,
-                          mediaType: 'podcast'
-                        });
-                      }
-                    }
-                  }
-                }
-              }
-            } catch(e) {}
         }
         setEpisodes(foundEpisodes);
       } catch (e) {

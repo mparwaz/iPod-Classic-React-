@@ -31,7 +31,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ isDarkMode, mode = 'musi
       setLoading(true);
       try {
         const mediaParam = mode === 'podcast' ? 'podcast' : 'music';
-        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=${mediaParam}&limit=20&_c=${Date.now()}`);
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=${mediaParam}&limit=20`);
         const data = await res.json();
         
         if (data.results) {

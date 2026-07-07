@@ -183,7 +183,7 @@ export const Ipod: React.FC = () => {
       const podcastShows = state.library.filter(s => s.mediaType === 'podcast_show');
       const podcastsMenu = newMenus['podcasts'];
       if (podcastsMenu) {
-        const searchItem = podcastsMenu.items.find(i => i.id === 'search_podcasts_link');
+        const searchItem = podcastsMenu.items.find(i => i.id === 'search_podcasts_view');
         const showItems = podcastShows.map(show => ({
           id: `menu_podcast_${show.id}`,
           label: show.title,
@@ -418,17 +418,12 @@ export const Ipod: React.FC = () => {
            let resolvedId = null;
            for (const proxy of proxies) {
              try {
-                const searchUrl = `${proxy}/api/v1/search?q=${encodeURIComponent(queryStr)}&type=video`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`;
-                const res = await fetch(proxyUrl);
+                const res = await fetch(`${proxy}/api/v1/search?q=${encodeURIComponent(queryStr)}&type=video`);
                 if (res.ok) {
                    const data = await res.json();
-                   if (data.contents) {
-                      const parsed = JSON.parse(data.contents);
-                      if (parsed && parsed.length > 0) {
-                         resolvedId = parsed[0].videoId;
-                         break;
-                      }
+                   if (data && data.length > 0) {
+                      resolvedId = data[0].videoId;
+                      break;
                    }
                 }
              } catch (e) {

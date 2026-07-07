@@ -50,7 +50,6 @@ export const MenuView: React.FC<MenuViewProps> = ({
             podcastUrl={menu.items[0].value as string} 
             podcastTitle={menu.title} 
             podcastArt={menu.items[0].image}
-            podcastId={menu.items[0].id.replace('podcast_episodes_view_', '')}
             onSelectEpisode={onSearchSelect} 
           />
         )}

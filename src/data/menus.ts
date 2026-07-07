@@ -89,19 +89,12 @@ export const menus: Record<string, Menu> = {
       { id: 'search_view', label: 'Search iTunes', type: 'search' }
     ]
   },
-  search_podcasts_menu: {
-    id: 'search_podcasts_menu',
-    title: 'Search Podcasts',
-    items: [
-      { id: 'search_podcasts_view', label: 'Search Podcasts', type: 'search' }
-    ]
-  },
   photos: { id: 'photos', title: 'Photos', items: [{ id: 'no_photos', label: 'No Photos', type: 'info', image: photoImage }] },
   podcasts: {
     id: 'podcasts',
     title: 'Podcasts',
     items: [
-      { id: 'search_podcasts_link', label: 'Search Podcasts', type: 'menu', target: 'search_podcasts_menu' }
+      { id: 'search_podcasts_view', label: 'Search Podcasts', type: 'search' }
     ]
   },
   nowplaying: {
